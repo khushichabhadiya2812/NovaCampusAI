@@ -22,6 +22,10 @@ app.use('/api/auth', authRoutes);
 const noteRoutes = require('./routes/notes');
 app.use('/api/notes', noteRoutes);
 
+// AI Routes
+const aiRoutes = require('./routes/ai');
+app.use('/api/ai', aiRoutes);
+
 // Database Connection & Server Start
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
