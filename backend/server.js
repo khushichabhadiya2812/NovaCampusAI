@@ -5,7 +5,7 @@ require('dotenv').config();
 
 const app = express();
 
-// Middleware
+// Middlewares
 app.use(express.json());
 app.use(cors());
 
@@ -14,7 +14,11 @@ app.get('/', (req, res) => {
     res.send('NovaCampus AI Server is Running Successfully!');
 });
 
-// Database Connection & Start Server
+// Auth Routes
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
+
+// Database Connection & Server Start
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
