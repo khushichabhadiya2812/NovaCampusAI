@@ -18,6 +18,10 @@ app.get('/', (req, res) => {
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 
+// Notes Routes (Ye line add karein)
+const noteRoutes = require('./routes/notes');
+app.use('/api/notes', noteRoutes);
+
 // Database Connection & Server Start
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
