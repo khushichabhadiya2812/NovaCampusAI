@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'https://novacampusai.onrender.com',
+  baseURL: 'https://novacampusai.onrender.com/api',
 });
 
 // Automatically attach JWT token agar user logged in ho
