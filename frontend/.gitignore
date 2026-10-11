@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Environment Variables (Sensitive keys)
+.env
+.env.local
+
+# Build output
+dist/
+build/
+
+# OS / Editor files
+.DS_Store
+.vscode/

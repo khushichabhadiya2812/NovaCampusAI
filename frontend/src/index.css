@@ -1,0 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Dark Mode (Default) */
+:root {
+  --bg-page: #090d16;
+  --bg-nav: #090d16;
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --heading-color: #9d8df1;
+  --badge-bg: #0284c7;
+  --badge-text: #ffffff;
+  --nav-link: #cbd5e1;
+  --nav-active-bg: #1e293b;
+  --nav-active-text: #ffffff;
+  --btn-primary-bg: #5b5bd6;
+  --btn-primary-shadow: rgba(91, 91, 214, 0.45);
+  --btn-secondary-bg: #090d16;
+  --btn-secondary-border: #1e293b;
+  --btn-secondary-text: #f8fafc;
+  --theme-btn-bg: #162032;
+  --theme-btn-border: #1e293b;
+  --card-border: rgba(255, 255, 255, 0.08);
+}
+
+/* Exact SkillPath AI Light Mode */
+body.light-theme {
+  --bg-page: #f1f4f9;
+  --bg-nav: #f1f4f9;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --heading-color: #554fe8;
+  --badge-bg: #0284c7;
+  --badge-text: #ffffff;
+  --nav-link: #334155;
+  --nav-active-bg: #e2e8f0;
+  --nav-active-text: #0f172a;
+  --btn-primary-bg: #554fe8;
+  --btn-primary-shadow: rgba(85, 79, 232, 0.35);
+  --btn-secondary-bg: #ffffff;
+  --btn-secondary-border: #cbd5e1;
+  --btn-secondary-text: #0f172a;
+  --theme-btn-bg: #e2e8f0;
+  --theme-btn-border: #cbd5e1;
+  --card-border: #cbd5e1;
+}
+
+body {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
