@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import API from '../services/api';
 
 const Summarizer = () => {
-  const [text, setText] = useState('');
   const [title, setTitle] = useState('');
   const [subject, setSubject] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [text, setText] = useState('');
   const [summary, setSummary] = useState('');
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [saveStatus, setSaveStatus] = useState('');
 
@@ -20,249 +20,231 @@ const Summarizer = () => {
     setSaveStatus('');
 
     try {
-      const response = await API.post('/ai/summarize', { text });
-      setSummary(response.data.summary);
+      const res = await API.post('/ai/summarize', { text });
+      const output = res.data.summary || res.data.result || res.data;
+      setSummary(typeof output === 'string' ? output : JSON.stringify(output, null, 2));
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to summarize text');
+      console.error(err);
+      setError('AI generation failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleSaveToNotes = async () => {
-    const noteTitle = title.trim() || 'AI Summary Notes';
-    const noteSubject = subject.trim() || 'General';
-
+    if (!summary) return;
     try {
       setSaveStatus('Saving...');
-      // Yahan ab title, subject, aur content teeno fields jaa rahi hain
       await API.post('/notes', {
-        title: noteTitle,
-        subject: noteSubject,
+        title: title || subject ? `Summary: ${title || subject}` : 'Study Notes Summary',
         content: summary
       });
       setSaveStatus('Saved to My Notes! ✓');
       setTimeout(() => setSaveStatus(''), 3000);
     } catch (err) {
-      setSaveStatus(err.response?.data?.message || 'Please login to save notes.');
+      console.error(err);
+      setSaveStatus('Failed to save note');
     }
   };
 
   return (
-    <div style={{ maxWidth: '960px', margin: '3rem auto', padding: '0 1.5rem', boxSizing: 'border-box' }}>
-      {/* Header */}
-      <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '0.45rem',
-          padding: '0.4rem 1.1rem',
-          borderRadius: '9999px',
-          backgroundColor: 'var(--badge-bg)',
-          color: 'var(--badge-text)',
-          fontSize: '0.85rem',
-          fontWeight: '700',
-          marginBottom: '1.2rem',
-          boxShadow: '0 2px 6px rgba(2, 132, 199, 0.3)'
-        }}>
-          ✦ Smart Study Notes Engine
-        </div>
-        <h1 style={{
-          fontSize: '2.8rem',
-          fontWeight: '900',
-          letterSpacing: '-1.2px',
-          color: 'var(--heading-color)',
-          marginBottom: '0.6rem'
-        }}>
-          AI Notes Summarizer
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', maxWidth: '580px', margin: '0 auto', lineHeight: '1.6' }}>
-          Paste lecture scripts, textbooks, or documentation to generate clear, revision-ready bullet points.
-        </p>
+    <div style={{ minHeight: '80vh', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      
+      {/* Badge */}
+      <div style={{
+        background: 'linear-gradient(90deg, #0284c7, #2563eb)',
+        color: '#ffffff',
+        padding: '6px 16px',
+        borderRadius: '20px',
+        fontSize: '13px',
+        fontWeight: '600',
+        marginBottom: '20px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px'
+      }}>
+        ✦ Smart Notes Summarizer
       </div>
 
-      {/* Form Input Card */}
+      {/* Title */}
+      <h1 style={{
+        fontSize: '36px',
+        fontWeight: '800',
+        color: '#c084fc',
+        margin: '0 0 12px 0',
+        textAlign: 'center'
+      }}>
+        AI Notes Summarizer
+      </h1>
+
+      <p style={{
+        color: '#94a3b8',
+        fontSize: '15px',
+        maxWidth: '650px',
+        textAlign: 'center',
+        margin: '0 0 35px 0',
+        lineHeight: '1.5'
+      }}>
+        Paste your raw study notes, textbook paragraphs, or syllabus topics to condense them into clean, revision-ready bullet points.
+      </p>
+
+      {/* Main Container Card */}
       <form onSubmit={handleSummarize} style={{
-        backgroundColor: 'var(--btn-secondary-bg)',
-        border: '1.5px solid var(--btn-secondary-border)',
-        borderRadius: '20px',
-        padding: '1.8rem',
-        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.05)',
+        width: '100%',
+        maxWidth: '800px',
+        background: '#0d1117',
+        border: '1px solid #30363d',
+        borderRadius: '16px',
+        padding: '24px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '1.2rem',
-        marginBottom: '2rem'
+        gap: '16px'
       }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        {/* Top 2 Inputs */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Topic / Note Title (e.g. ADO.NET Architecture)"
+            placeholder="Topic / Title (e.g. LSRW)"
             style={{
-              padding: '0.9rem 1.2rem',
-              backgroundColor: 'transparent',
-              border: '1px solid var(--btn-secondary-border)',
-              borderRadius: '12px',
-              color: 'var(--text-primary)',
-              fontSize: '0.95rem',
+              background: '#161b22',
+              border: '1px solid #30363d',
+              borderRadius: '10px',
+              color: '#f0f6fc',
+              fontSize: '14px',
+              padding: '12px 14px',
               outline: 'none'
             }}
           />
-
           <input
             type="text"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            placeholder="Subject / Category (e.g. Database Systems, Web Dev)"
+            placeholder="Subject / Category"
             style={{
-              padding: '0.9rem 1.2rem',
-              backgroundColor: 'transparent',
-              border: '1px solid var(--btn-secondary-border)',
-              borderRadius: '12px',
-              color: 'var(--text-primary)',
-              fontSize: '0.95rem',
+              background: '#161b22',
+              border: '1px solid #30363d',
+              borderRadius: '10px',
+              color: '#f0f6fc',
+              fontSize: '14px',
+              padding: '12px 14px',
               outline: 'none'
             }}
           />
         </div>
 
+        {/* Text Area */}
         <textarea
-          rows="7"
+          rows={6}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Paste your study materials or concepts here..."
+          placeholder="Paste raw notes or textbook concepts here..."
           style={{
-            padding: '1rem 1.2rem',
-            backgroundColor: 'transparent',
-            border: '1px solid var(--btn-secondary-border)',
-            borderRadius: '12px',
-            color: 'var(--text-primary)',
-            fontSize: '0.95rem',
+            background: '#161b22',
+            border: '1px solid #30363d',
+            borderRadius: '10px',
+            color: '#f0f6fc',
+            fontSize: '14px',
+            padding: '14px',
             outline: 'none',
             resize: 'vertical',
-            lineHeight: '1.6'
+            fontFamily: 'inherit'
           }}
         />
 
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            alignSelf: 'flex-start',
-            padding: '0.9rem 1.9rem',
-            borderRadius: '12px',
-            border: 'none',
-            backgroundColor: loading ? '#94a3b8' : 'var(--btn-primary-bg)',
-            color: '#fff',
-            fontWeight: '700',
-            fontSize: '0.95rem',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            boxShadow: '0 4px 14px var(--btn-primary-shadow)',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          {loading ? 'Summarizing...' : 'Summarize Notes'}
-        </button>
+        {/* Action Button */}
+        <div>
+          <button
+            type="submit"
+            disabled={loading || !text.trim()}
+            style={{
+              background: '#6366f1',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '12px 24px',
+              fontSize: '15px',
+              fontWeight: '600',
+              cursor: loading || !text.trim() ? 'not-allowed' : 'pointer',
+              opacity: loading || !text.trim() ? 0.6 : 1,
+              transition: 'background 0.2s'
+            }}
+          >
+            {loading ? 'Summarizing...' : 'Summarize Notes'}
+          </button>
+        </div>
       </form>
 
       {/* Error Message */}
       {error && (
         <div style={{
-          padding: '1rem 1.2rem',
-          backgroundColor: 'rgba(239, 68, 68, 0.1)',
-          border: '1px solid rgba(239, 68, 68, 0.3)',
-          borderRadius: '12px',
-          color: '#ef4444',
-          marginBottom: '1.5rem',
-          fontSize: '0.95rem'
+          width: '100%',
+          maxWidth: '800px',
+          marginTop: '20px',
+          background: 'rgba(239, 68, 68, 0.1)',
+          border: '1px solid rgba(239, 68, 68, 0.4)',
+          color: '#f87171',
+          padding: '14px 18px',
+          borderRadius: '10px',
+          fontSize: '14px'
         }}>
           {error}
-        </div>
-      )}
-
-      {/* Loading State */}
-      {loading && (
-        <div style={{
-          textAlign: 'center',
-          padding: '3rem 2rem',
-          borderRadius: '16px',
-          border: '1.5px dashed var(--btn-secondary-border)',
-          color: 'var(--heading-color)',
-          fontSize: '1.1rem',
-          fontWeight: '600'
-        }}>
-          ✦ Gemini is extracting high-yield points from your notes...
         </div>
       )}
 
       {/* Summary Output Card */}
       {summary && (
         <div style={{
-          backgroundColor: 'var(--btn-secondary-bg)',
-          border: '1.5px solid var(--btn-secondary-border)',
-          borderRadius: '20px',
-          padding: '2rem',
-          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.08)'
+          width: '100%',
+          maxWidth: '800px',
+          marginTop: '24px',
+          background: '#161b22',
+          border: '1px solid #30363d',
+          borderRadius: '14px',
+          padding: '24px'
         }}>
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '1.4rem',
-            borderBottom: '1px solid var(--btn-secondary-border)',
-            paddingBottom: '0.9rem'
+            borderBottom: '1px solid #30363d',
+            paddingBottom: '12px',
+            marginBottom: '16px'
           }}>
-            <div>
-              <span style={{ color: 'var(--heading-color)', fontWeight: '800', fontSize: '1.2rem', display: 'block' }}>
-                {title.trim() || 'Summary Output'}
-              </span>
-              {subject.trim() && (
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                  Category: {subject}
-                </span>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', gap: '0.9rem', alignItems: 'center' }}>
-              {saveStatus && (
-                <span style={{
-                  color: saveStatus.includes('✓') ? '#10b981' : '#f87171',
-                  fontSize: '0.88rem',
-                  fontWeight: '600'
-                }}>
-                  {saveStatus}
-                </span>
-              )}
+            <h3 style={{ margin: 0, color: '#c084fc', fontSize: '18px' }}>Key Takeaways & Summary</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {saveStatus && <span style={{ fontSize: '13px', color: '#4ade80' }}>{saveStatus}</span>}
               <button
+                type="button"
                 onClick={handleSaveToNotes}
                 style={{
-                  padding: '0.55rem 1.2rem',
-                  borderRadius: '10px',
-                  border: 'none',
-                  backgroundColor: '#10b981',
+                  background: '#2563eb',
                   color: '#fff',
-                  fontSize: '0.88rem',
-                  fontWeight: '700',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '7px 14px',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  cursor: 'pointer'
                 }}
               >
-                Save to Database
+                Save to My Notes
               </button>
             </div>
           </div>
 
           <div style={{
-            color: 'var(--text-primary)',
-            lineHeight: '1.8',
-            fontSize: '1rem',
+            color: '#e6edf3',
+            fontSize: '14.5px',
+            lineHeight: '1.7',
             whiteSpace: 'pre-wrap'
           }}>
             {summary}
           </div>
         </div>
       )}
+
     </div>
   );
 };
