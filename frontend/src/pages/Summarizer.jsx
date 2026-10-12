@@ -1,252 +1,162 @@
 import React, { useState } from 'react';
-import API from '../services/api';
+import axios from 'axios';
+
+const BACKEND_URL = 'https://novacampusai.onrender.com';
 
 const Summarizer = () => {
-  const [title, setTitle] = useState('');
-  const [subject, setSubject] = useState('');
-  const [text, setText] = useState('');
-  const [summary, setSummary] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [saveStatus, setSaveStatus] = useState('');
+    const [subject, setSubject] = useState('');
+    const [topic, setTopic] = useState('');
+    const [notesText, setNotesText] = useState('');
+    const [summary, setSummary] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [saveLoading, setSaveLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
+    const [saveMsg, setSaveMsg] = useState('');
 
-  const handleSummarize = async (e) => {
-    e.preventDefault();
-    if (!text.trim()) return;
+    // AI se summary mangwane ka function
+    const handleSummarize = async () => {
+        if (!notesText.trim()) {
+            setErrorMsg('Please enter notes text to summarize.');
+            return;
+        }
 
-    setLoading(true);
-    setError('');
-    setSummary('');
-    setSaveStatus('');
+        setLoading(true);
+        setErrorMsg('');
+        setSaveMsg('');
 
-    try {
-      const res = await API.post('/ai/summarize', { text });
-      const output = res.data.summary || res.data.result || res.data;
-      setSummary(typeof output === 'string' ? output : JSON.stringify(output, null, 2));
-    } catch (err) {
-      console.error(err);
-      setError('AI generation failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+        try {
+            const res = await axios.post(`${BACKEND_URL}/api/ai/summarize`, {
+                text: notesText
+            });
 
-  const handleSaveToNotes = async () => {
-    if (!summary) return;
-    try {
-      setSaveStatus('Saving...');
-      await API.post('/notes', {
-        title: title || subject ? `Summary: ${title || subject}` : 'Study Notes Summary',
-        content: summary
-      });
-      setSaveStatus('Saved to My Notes! ✓');
-      setTimeout(() => setSaveStatus(''), 3000);
-    } catch (err) {
-      console.error(err);
-      setSaveStatus('Failed to save note');
-    }
-  };
+            const resultText = res.data.summary || res.data.result;
+            setSummary(resultText);
+        } catch (err) {
+            console.error('AI Error:', err);
+            setErrorMsg('AI generation failed. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  return (
-    <div style={{ minHeight: '80vh', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      
-      {/* Badge */}
-      <div style={{
-        background: 'linear-gradient(90deg, #0284c7, #2563eb)',
-        color: '#ffffff',
-        padding: '6px 16px',
-        borderRadius: '20px',
-        fontSize: '13px',
-        fontWeight: '600',
-        marginBottom: '20px',
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '6px'
-      }}>
-        ✦ Smart Notes Summarizer
-      </div>
+    // Note ko Database me Save karne ka function
+    const handleSaveNote = async () => {
+        if (!summary) return;
 
-      {/* Title */}
-      <h1 style={{
-        fontSize: '36px',
-        fontWeight: '800',
-        color: '#c084fc',
-        margin: '0 0 12px 0',
-        textAlign: 'center'
-      }}>
-        AI Notes Summarizer
-      </h1>
+        setSaveLoading(true);
+        setSaveMsg('');
 
-      <p style={{
-        color: '#94a3b8',
-        fontSize: '15px',
-        maxWidth: '650px',
-        textAlign: 'center',
-        margin: '0 0 35px 0',
-        lineHeight: '1.5'
-      }}>
-        Paste your raw study notes, textbook paragraphs, or syllabus topics to condense them into clean, revision-ready bullet points.
-      </p>
+        try {
+            const token = localStorage.getItem('token');
+            const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-      {/* Main Container Card */}
-      <form onSubmit={handleSummarize} style={{
-        width: '100%',
-        maxWidth: '800px',
-        background: '#0d1117',
-        border: '1px solid #30363d',
-        borderRadius: '16px',
-        padding: '24px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px'
-      }}>
-        {/* Top 2 Inputs */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Topic / Title (e.g. LSRW)"
-            style={{
-              background: '#161b22',
-              border: '1px solid #30363d',
-              borderRadius: '10px',
-              color: '#f0f6fc',
-              fontSize: '14px',
-              padding: '12px 14px',
-              outline: 'none'
-            }}
-          />
-          <input
-            type="text"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            placeholder="Subject / Category"
-            style={{
-              background: '#161b22',
-              border: '1px solid #30363d',
-              borderRadius: '10px',
-              color: '#f0f6fc',
-              fontSize: '14px',
-              padding: '12px 14px',
-              outline: 'none'
-            }}
-          />
-        </div>
+            await axios.post(
+                `${BACKEND_URL}/api/notes`,
+                {
+                    title: topic || subject || 'Study Revision',
+                    subject: subject || 'General',
+                    content: summary
+                },
+                { headers }
+            );
 
-        {/* Text Area */}
-        <textarea
-          rows={6}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Paste raw notes or textbook concepts here..."
-          style={{
-            background: '#161b22',
-            border: '1px solid #30363d',
-            borderRadius: '10px',
-            color: '#f0f6fc',
-            fontSize: '14px',
-            padding: '14px',
-            outline: 'none',
-            resize: 'vertical',
-            fontFamily: 'inherit'
-          }}
-        />
+            setSaveMsg('Note saved successfully!');
+        } catch (err) {
+            console.error('Save Note Error:', err);
+            setSaveMsg('Failed to save note');
+        } finally {
+            setSaveLoading(false);
+        }
+    };
 
-        {/* Action Button */}
-        <div>
-          <button
-            type="submit"
-            disabled={loading || !text.trim()}
-            style={{
-              background: '#6366f1',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '10px',
-              padding: '12px 24px',
-              fontSize: '15px',
-              fontWeight: '600',
-              cursor: loading || !text.trim() ? 'not-allowed' : 'pointer',
-              opacity: loading || !text.trim() ? 0.6 : 1,
-              transition: 'background 0.2s'
-            }}
-          >
-            {loading ? 'Summarizing...' : 'Summarize Notes'}
-          </button>
-        </div>
-      </form>
-
-      {/* Error Message */}
-      {error && (
-        <div style={{
-          width: '100%',
-          maxWidth: '800px',
-          marginTop: '20px',
-          background: 'rgba(239, 68, 68, 0.1)',
-          border: '1px solid rgba(239, 68, 68, 0.4)',
-          color: '#f87171',
-          padding: '14px 18px',
-          borderRadius: '10px',
-          fontSize: '14px'
-        }}>
-          {error}
-        </div>
-      )}
-
-      {/* Summary Output Card */}
-      {summary && (
-        <div style={{
-          width: '100%',
-          maxWidth: '800px',
-          marginTop: '24px',
-          background: '#161b22',
-          border: '1px solid #30363d',
-          borderRadius: '14px',
-          padding: '24px'
-        }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderBottom: '1px solid #30363d',
-            paddingBottom: '12px',
-            marginBottom: '16px'
-          }}>
-            <h3 style={{ margin: 0, color: '#c084fc', fontSize: '18px' }}>Key Takeaways & Summary</h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              {saveStatus && <span style={{ fontSize: '13px', color: '#4ade80' }}>{saveStatus}</span>}
-              <button
-                type="button"
-                onClick={handleSaveToNotes}
-                style={{
-                  background: '#2563eb',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '7px 14px',
-                  fontSize: '13px',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
-              >
-                Save to My Notes
-              </button>
+    return (
+        <div className="min-h-screen bg-[#070b14] text-white flex flex-col items-center py-10 px-4">
+            {/* Header Badge */}
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-600/20 border border-blue-500/40 text-blue-400 text-xs font-semibold mb-6">
+                <span>✦ Smart Notes Summarizer</span>
             </div>
-          </div>
 
-          <div style={{
-            color: '#e6edf3',
-            fontSize: '14.5px',
-            lineHeight: '1.7',
-            whiteSpace: 'pre-wrap'
-          }}>
-            {summary}
-          </div>
+            {/* Title */}
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 mb-2">
+                AI Notes Summarizer
+            </h1>
+            <p className="text-gray-400 text-sm text-center max-w-lg mb-8">
+                Paste your raw study notes, textbook paragraphs, or syllabus topics to condense them into clean, revision-ready bullet points.
+            </p>
+
+            {/* Input Card */}
+            <div className="w-full max-w-2xl bg-[#0f172a] border border-gray-800 rounded-xl p-6 shadow-xl mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                    <input
+                        type="text"
+                        placeholder="Subject"
+                        value={subject}
+                        onChange={(e) => setSubject(e.target.value)}
+                        className="bg-[#1e293b] border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                    />
+                    <input
+                        type="text"
+                        placeholder="Topic"
+                        value={topic}
+                        onChange={(e) => setTopic(e.target.value)}
+                        className="bg-[#1e293b] border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                    />
+                </div>
+
+                <textarea
+                    rows="6"
+                    placeholder="Enter study notes here..."
+                    value={notesText}
+                    onChange={(e) => setNotesText(e.target.value)}
+                    className="w-full bg-[#1e293b] border border-gray-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-blue-500 mb-4 resize-none"
+                ></textarea>
+
+                <button
+                    onClick={handleSummarize}
+                    disabled={loading}
+                    className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm rounded-lg transition disabled:opacity-50"
+                >
+                    {loading ? 'Summarizing...' : 'Summarize Notes'}
+                </button>
+
+                {errorMsg && (
+                    <div className="mt-4 p-3 bg-red-950/40 border border-red-800 text-red-400 rounded-lg text-xs">
+                        {errorMsg}
+                    </div>
+                )}
+            </div>
+
+            {/* Output Summary Card */}
+            {summary && (
+                <div className="w-full max-w-2xl bg-[#0f172a] border border-gray-800 rounded-xl p-6 shadow-xl">
+                    <div className="flex items-center justify-between border-b border-gray-800 pb-3 mb-4">
+                        <div>
+                            <h2 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
+                                Key Takeaways & Summary
+                            </h2>
+                            {saveMsg && (
+                                <span className={`text-xs ${saveMsg.includes('success') ? 'text-green-400' : 'text-red-400'}`}>
+                                    {saveMsg}
+                                </span>
+                            )}
+                        </div>
+
+                        <button
+                            onClick={handleSaveNote}
+                            disabled={saveLoading}
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition disabled:opacity-50"
+                        >
+                            {saveLoading ? 'Saving...' : 'Save to My Notes'}
+                        </button>
+                    </div>
+
+                    <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed">
+                        {summary}
+                    </div>
+                </div>
+            )}
         </div>
-      )}
-
-    </div>
-  );
+    );
 };
 
 export default Summarizer;
