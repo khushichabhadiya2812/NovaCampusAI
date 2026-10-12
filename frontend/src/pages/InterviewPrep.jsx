@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 import API from '../services/api';
 
 const InterviewPrep = () => {
@@ -19,10 +20,12 @@ const InterviewPrep = () => {
 
     try {
       const res = await API.post('/ai/interview-prep', { topic });
-      setResult(res.data.response || res.data.result || res.data);
+      // Backend se chahe result aaye ya questions, dono handle honge
+      const data = res.data.result || res.data.questions || res.data;
+      setResult(typeof data === 'string' ? data : JSON.stringify(data, null, 2));
     } catch (err) {
       console.error(err);
-      setError('AI generation failed');
+      setError('AI generation failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -34,7 +37,7 @@ const InterviewPrep = () => {
       setSaveStatus('Saving...');
       await API.post('/notes', {
         title: `Interview Prep: ${topic}`,
-        content: typeof result === 'string' ? result : JSON.stringify(result, null, 2)
+        content: result
       });
       setSaveStatus('Saved to My Notes! ✓');
       setTimeout(() => setSaveStatus(''), 3000);
@@ -125,7 +128,6 @@ const InterviewPrep = () => {
             fontWeight: '600',
             cursor: loading ? 'not-allowed' : 'pointer',
             opacity: loading || !topic.trim() ? 0.7 : 1,
-            transition: 'background 0.2s',
             whiteSpace: 'nowrap'
           }}
         >
@@ -167,7 +169,7 @@ const InterviewPrep = () => {
             alignItems: 'center',
             borderBottom: '1px solid #30363d',
             paddingBottom: '12px',
-            marginBottom: '16px'
+            marginBottom: '20px'
           }}>
             <h3 style={{ margin: 0, color: '#c084fc', fontSize: '18px' }}>Model Questions & Solutions</h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -197,7 +199,7 @@ const InterviewPrep = () => {
             lineHeight: '1.7',
             whiteSpace: 'pre-wrap'
           }}>
-            {typeof result === 'string' ? result : JSON.stringify(result, null, 2)}
+            <ReactMarkdown>{result}</ReactMarkdown>
           </div>
         </div>
       )}
